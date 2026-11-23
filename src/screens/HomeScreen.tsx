@@ -1,220 +1,123 @@
-import React, { useMemo } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  ScrollView,
-  TouchableOpacity,
-} from 'react-native';
-import { Subscription } from '../types';
+import React from 'react';
+import { StyleSheet, Text, View, TouchableOpacity, ScrollView } from 'react-native';
 import { useTheme } from '../context/ThemeContext';
 import { useSubscriptions } from '../context/SubscriptionContext';
-import { SubscriptionCard } from '../components/SubscriptionCard';
 import { SPACING, FONT_SIZES } from '../constants/theme';
+import { MainTabScreenProps } from '../navigation/types';
 
-export interface HomeScreenProps {
-  navigation?: {
-    navigate: (screen: string) => void;
-  };
-  onNavigate?: (screen: string, sub?: Subscription) => void;
-}
+export const HomeScreen: React.FC<MainTabScreenProps<'Home'>> = ({ navigation }) => {
+  const { theme } = useTheme();
+  const { subscriptions } = useSubscriptions();
 
-export const HomeScreen: React.FC<HomeScreenProps> = ({ navigation, onNavigate }) => {
-  const { theme, isDark, toggleTheme } = useTheme();
-  const { subscriptions, setSelectedSubscription } = useSubscriptions();
-
-  const handleNavigate = (screen: string, sub?: Subscription) => {
-    if (sub) {
-      setSelectedSubscription(sub);
-    }
-    if (navigation?.navigate) {
-      navigation.navigate(screen);
-    } else if (onNavigate) {
-      onNavigate(screen, sub);
+  const handleOpenDetailDemo = (): void => {
+    if (subscriptions.length > 0) {
+      navigation.navigate('SubscriptionDetail', { subscriptionId: subscriptions[0].id });
     }
   };
 
-  // Spending totals grouped by currency
-  const totals = useMemo(() => {
-    const summary: Record<string, number> = { TRY: 0, USD: 0, EUR: 0 };
-    subscriptions.forEach((sub) => {
-      const monthlyAmount =
-        sub.billingCycle === 'yearly' ? sub.amount / 12 : sub.amount;
-      summary[sub.currency] = (summary[sub.currency] || 0) + monthlyAmount;
-    });
-    return summary;
-  }, [subscriptions]);
-
-  const upcomingSubscriptions = useMemo(() => {
-    return [...subscriptions]
-      .sort((a, b) => a.paymentDay - b.paymentDay)
-      .slice(0, 3);
-  }, [subscriptions]);
+  const dynamicStyles = {
+    screen: {
+      backgroundColor: theme.background,
+    },
+    card: {
+      backgroundColor: theme.surface,
+      borderColor: theme.border,
+    },
+    title: {
+      color: theme.text,
+    },
+    subtitle: {
+      color: theme.textSecondary,
+    },
+    highlight: {
+      color: theme.primary,
+    },
+    badge: {
+      backgroundColor: theme.primary,
+    },
+    badgeText: {
+      color: theme.buttonText,
+    },
+    detailButton: {
+      backgroundColor: theme.primary,
+    },
+    detailButtonText: {
+      color: theme.buttonText,
+    },
+  };
 
   return (
-    <ScrollView
-      style={[styles.container, { backgroundColor: theme.colors.background }]}
-      contentContainerStyle={styles.content}
-      showsVerticalScrollIndicator={false}
-    >
-      {/* Header */}
-      <View style={styles.header}>
-        <View>
-          <Text style={[styles.title, { color: theme.colors.text }]}>
-            Aboneliklerim
-          </Text>
-          <Text style={[styles.subtitle, { color: theme.colors.textSecondary }]}>
-            Aylık gider takibi ve kontrol
-          </Text>
+    <ScrollView style={[styles.screen, dynamicStyles.screen]} contentContainerStyle={styles.content}>
+      <View style={[styles.card, dynamicStyles.card]}>
+        <View style={styles.badgeRow}>
+          <View style={[styles.badge, dynamicStyles.badge]}>
+            <Text style={[styles.badgeText, dynamicStyles.badgeText]}>Öğrenci 2 Ekranı</Text>
+          </View>
         </View>
+
+        <Text style={[styles.title, dynamicStyles.title]}>Ana Sayfa Paneli</Text>
+        <Text style={[styles.subtitle, dynamicStyles.subtitle]}>
+          Kayıtlı toplam <Text style={dynamicStyles.highlight}>{subscriptions.length}</Text> adet
+          abonelik bulunmaktadır.
+        </Text>
 
         <TouchableOpacity
-          onPress={toggleTheme}
-          style={[
-            styles.themeButton,
-            { backgroundColor: theme.colors.surface, borderColor: theme.colors.border },
-          ]}
+          style={[styles.button, dynamicStyles.detailButton]}
+          onPress={handleOpenDetailDemo}
+          activeOpacity={0.8}
         >
-          <Text style={[styles.themeText, { color: theme.colors.text }]}>
-            {isDark ? '☀️ Açık' : '🌙 Koyu'}
+          <Text style={[styles.buttonText, dynamicStyles.detailButtonText]}>
+            Örnek Abonelik Detayını Gör
           </Text>
         </TouchableOpacity>
       </View>
-
-      {/* Summary Cards */}
-      <View style={[styles.summaryCard, { backgroundColor: theme.colors.primary }]}>
-        <Text style={styles.summaryLabel}>Tahmini Aylık Toplam Harcama</Text>
-        <View style={styles.totalsRow}>
-          {totals.TRY > 0 && (
-            <Text style={styles.totalAmount}>₺{totals.TRY.toFixed(0)}</Text>
-          )}
-          {totals.USD > 0 && (
-            <Text style={styles.totalAmountSecondary}>+ ${totals.USD.toFixed(0)}</Text>
-          )}
-          {totals.EUR > 0 && (
-            <Text style={styles.totalAmountSecondary}>+ €{totals.EUR.toFixed(0)}</Text>
-          )}
-        </View>
-        <View style={styles.summaryFooter}>
-          <Text style={styles.activeCountText}>
-            Toplam {subscriptions.length} aktif abonelik
-          </Text>
-        </View>
-      </View>
-
-      {/* Quick Action */}
-      <TouchableOpacity
-        activeOpacity={0.8}
-        onPress={() => handleNavigate('AddSubscription')}
-        style={[
-          styles.actionButton,
-          { backgroundColor: theme.colors.surface, borderColor: theme.colors.primary },
-        ]}
-      >
-        <Text style={[styles.actionButtonText, { color: theme.colors.primary }]}>
-          + Yeni Abonelik Ekle
-        </Text>
-      </TouchableOpacity>
-
-      {/* Upcoming Section */}
-      <View style={styles.sectionHeader}>
-        <Text style={[styles.sectionTitle, { color: theme.colors.text }]}>
-          Yaklaşan Ödemeler
-        </Text>
-        <TouchableOpacity onPress={() => handleNavigate('Subscriptions')}>
-          <Text style={[styles.seeAllText, { color: theme.colors.primary }]}>
-            Tümünü Gör ({subscriptions.length})
-          </Text>
-        </TouchableOpacity>
-      </View>
-
-      {upcomingSubscriptions.length === 0 ? (
-        <View
-          style={[
-            styles.emptyCard,
-            { backgroundColor: theme.colors.surface, borderColor: theme.colors.border },
-          ]}
-        >
-          <Text style={[styles.emptyText, { color: theme.colors.textSecondary }]}>
-            Henüz eklenmiş bir abonelik yok.
-          </Text>
-        </View>
-      ) : (
-        upcomingSubscriptions.map((sub) => (
-          <SubscriptionCard
-            key={sub.id}
-            subscription={sub}
-            onPress={(item) => handleNavigate('SubscriptionDetail', item)}
-          />
-        ))
-      )}
     </ScrollView>
   );
 };
 
 const styles = StyleSheet.create({
-  container: { flex: 1 },
-  content: { padding: SPACING.md, paddingBottom: SPACING.xl * 2 },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: SPACING.md,
+  screen: {
+    flex: 1,
   },
-  title: { fontSize: FONT_SIZES.xxl, fontWeight: '800' },
-  subtitle: { fontSize: FONT_SIZES.sm, marginTop: 2 },
-  themeButton: {
+  content: {
+    padding: SPACING.md,
+  },
+  card: {
+    borderRadius: SPACING.md,
+    borderWidth: 1,
+    padding: SPACING.lg,
+    marginTop: SPACING.md,
+  },
+  badgeRow: {
+    flexDirection: 'row',
+    marginBottom: SPACING.sm,
+  },
+  badge: {
     paddingHorizontal: SPACING.sm,
     paddingVertical: SPACING.xs,
-    borderRadius: 8,
-    borderWidth: 1,
+    borderRadius: SPACING.xs,
   },
-  themeText: { fontSize: FONT_SIZES.xs, fontWeight: '600' },
-  summaryCard: {
-    borderRadius: 16,
-    padding: SPACING.lg,
-    marginBottom: SPACING.md,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.15,
-    shadowRadius: 8,
-    elevation: 4,
+  badgeText: {
+    fontSize: FONT_SIZES.xs,
+    fontWeight: '600',
   },
-  summaryLabel: { color: 'rgba(255,255,255,0.85)', fontSize: FONT_SIZES.sm, fontWeight: '600' },
-  totalsRow: {
-    flexDirection: 'row',
-    alignItems: 'baseline',
-    gap: SPACING.sm,
-    marginVertical: SPACING.xs,
-    flexWrap: 'wrap',
+  title: {
+    fontSize: FONT_SIZES.xl,
+    fontWeight: '700',
+    marginBottom: SPACING.xs,
   },
-  totalAmount: { color: '#FFFFFF', fontSize: 32, fontWeight: '900' },
-  totalAmountSecondary: { color: '#FFFFFF', fontSize: FONT_SIZES.xl, fontWeight: '700' },
-  summaryFooter: { marginTop: SPACING.xs },
-  activeCountText: { color: 'rgba(255,255,255,0.9)', fontSize: FONT_SIZES.xs, fontWeight: '500' },
-  actionButton: {
-    borderWidth: 1.5,
-    borderStyle: 'dashed',
-    borderRadius: 12,
-    height: 48,
-    alignItems: 'center',
-    justifyContent: 'center',
+  subtitle: {
+    fontSize: FONT_SIZES.sm,
     marginBottom: SPACING.lg,
+    lineHeight: 20,
   },
-  actionButtonText: { fontSize: FONT_SIZES.sm, fontWeight: '700' },
-  sectionHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: SPACING.md,
-  },
-  sectionTitle: { fontSize: FONT_SIZES.lg, fontWeight: '700' },
-  seeAllText: { fontSize: FONT_SIZES.sm, fontWeight: '600' },
-  emptyCard: {
-    padding: SPACING.lg,
-    borderRadius: 12,
-    borderWidth: 1,
+  button: {
+    borderRadius: SPACING.sm,
+    paddingVertical: SPACING.md,
     alignItems: 'center',
   },
-  emptyText: { fontSize: FONT_SIZES.sm },
+  buttonText: {
+    fontSize: FONT_SIZES.md,
+    fontWeight: '600',
+  },
 });

@@ -1,174 +1,91 @@
-import React, { useState, useMemo } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  FlatList,
-  TouchableOpacity,
-  Alert,
-  TextInput,
-} from 'react-native';
-import { Subscription, SubscriptionCategory } from '../types';
+import React from 'react';
+import { StyleSheet, Text, View, FlatList, TouchableOpacity } from 'react-native';
 import { useTheme } from '../context/ThemeContext';
 import { useSubscriptions } from '../context/SubscriptionContext';
-import { SubscriptionCard } from '../components/SubscriptionCard';
-import { SPACING, FONT_SIZES, CATEGORY_OPTIONS } from '../constants/theme';
+import { SPACING, FONT_SIZES } from '../constants/theme';
+import { MainTabScreenProps } from '../navigation/types';
+import { Subscription } from '../types';
 
-export interface SubscriptionsScreenProps {
-  navigation?: {
-    navigate: (screen: string) => void;
-  };
-  onNavigate?: (screen: string, sub?: Subscription) => void;
-}
-
-const ALL_CATEGORY = 'Tümü';
-
-export const SubscriptionsScreen: React.FC<SubscriptionsScreenProps> = ({
+export const SubscriptionsScreen: React.FC<MainTabScreenProps<'Subscriptions'>> = ({
   navigation,
-  onNavigate,
 }) => {
   const { theme } = useTheme();
-  const { subscriptions, deleteSubscription, setSelectedSubscription } =
-    useSubscriptions();
+  const { subscriptions } = useSubscriptions();
 
-  const [selectedCategory, setSelectedCategory] = useState<string>(ALL_CATEGORY);
-  const [searchQuery, setSearchQuery] = useState<string>('');
-
-  const handleCardPress = (subscription: Subscription) => {
-    setSelectedSubscription(subscription);
-    if (navigation?.navigate) {
-      navigation.navigate('SubscriptionDetail');
-    } else if (onNavigate) {
-      onNavigate('SubscriptionDetail', subscription);
-    }
+  const handleSelectSubscription = (id: string): void => {
+    navigation.navigate('SubscriptionDetail', { subscriptionId: id });
   };
 
-  const handleDelete = (id: string) => {
-    Alert.alert(
-      'Aboneliği Sil',
-      'Bu aboneliği silmek istediğinize emin misiniz?',
-      [
-        { text: 'Vazgeç', style: 'cancel' },
-        {
-          text: 'Sil',
-          style: 'destructive',
-          onPress: () => deleteSubscription(id),
-        },
-      ]
-    );
+  const dynamicStyles = {
+    screen: {
+      backgroundColor: theme.background,
+    },
+    card: {
+      backgroundColor: theme.surface,
+      borderColor: theme.border,
+    },
+    badge: {
+      backgroundColor: theme.primary,
+    },
+    badgeText: {
+      color: theme.buttonText,
+    },
+    headerText: {
+      color: theme.text,
+    },
+    subHeader: {
+      color: theme.textSecondary,
+    },
+    itemTitle: {
+      color: theme.text,
+    },
+    itemCategory: {
+      color: theme.textSecondary,
+    },
+    itemAmount: {
+      color: theme.primary,
+    },
+    itemCycle: {
+      color: theme.textSecondary,
+    },
   };
 
-  const filteredSubscriptions = useMemo(() => {
-    return subscriptions.filter((sub) => {
-      const matchesCategory =
-        selectedCategory === ALL_CATEGORY || sub.category === selectedCategory;
-      const matchesSearch = sub.name
-        .toLowerCase()
-        .includes(searchQuery.toLowerCase().trim());
-      return matchesCategory && matchesSearch;
-    });
-  }, [subscriptions, selectedCategory, searchQuery]);
-
-  const categories = [ALL_CATEGORY, ...CATEGORY_OPTIONS];
+  const renderItem = ({ item }: { item: Subscription }) => (
+    <TouchableOpacity
+      style={[styles.itemCard, dynamicStyles.card]}
+      onPress={() => handleSelectSubscription(item.id)}
+      activeOpacity={0.7}
+    >
+      <View style={styles.itemInfo}>
+        <Text style={[styles.itemName, dynamicStyles.itemTitle]}>{item.name}</Text>
+        <Text style={[styles.itemCategory, dynamicStyles.itemCategory]}>{item.category}</Text>
+      </View>
+      <View style={styles.itemPriceSection}>
+        <Text style={[styles.itemAmount, dynamicStyles.itemAmount]}>
+          {item.amount.toFixed(2)} {item.currency}
+        </Text>
+        <Text style={[styles.itemCycle, dynamicStyles.itemCycle]}>
+          {item.billingCycle === 'monthly' ? '/ay' : '/yıl'}
+        </Text>
+      </View>
+    </TouchableOpacity>
+  );
 
   return (
-    <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
-      {/* Header */}
-      <View style={styles.header}>
-        <Text style={[styles.title, { color: theme.colors.text }]}>
-          Tüm Abonelikler
-        </Text>
-        <Text style={[styles.subtitle, { color: theme.colors.textSecondary }]}>
-          {subscriptions.length} kayıtlı abonelik listeleniyor
-        </Text>
-
-        {/* Search Bar */}
-        <TextInput
-          style={[
-            styles.searchInput,
-            {
-              backgroundColor: theme.colors.surface,
-              borderColor: theme.colors.border,
-              color: theme.colors.text,
-            },
-          ]}
-          placeholder="Abonelik ara..."
-          placeholderTextColor={theme.colors.textSecondary}
-          value={searchQuery}
-          onChangeText={setSearchQuery}
-        />
-
-        {/* Category Filters */}
-        <FlatList
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          data={categories}
-          keyExtractor={(item) => item}
-          contentContainerStyle={styles.categoryList}
-          renderItem={({ item }) => {
-            const isSelected = selectedCategory === item;
-            return (
-              <TouchableOpacity
-                onPress={() => setSelectedCategory(item)}
-                style={[
-                  styles.filterChip,
-                  {
-                    backgroundColor: isSelected
-                      ? theme.colors.primary
-                      : theme.colors.surface,
-                    borderColor: isSelected
-                      ? theme.colors.primary
-                      : theme.colors.border,
-                  },
-                ]}
-              >
-                <Text
-                  style={[
-                    styles.filterChipText,
-                    { color: isSelected ? '#FFFFFF' : theme.colors.text },
-                  ]}
-                >
-                  {item}
-                </Text>
-              </TouchableOpacity>
-            );
-          }}
-        />
-      </View>
-
-      {/* Subscription List */}
+    <View style={[styles.screen, dynamicStyles.screen]}>
       <FlatList
-        data={filteredSubscriptions}
+        data={subscriptions}
         keyExtractor={(item) => item.id}
+        renderItem={renderItem}
         contentContainerStyle={styles.listContent}
-        showsVerticalScrollIndicator={false}
-        renderItem={({ item }) => (
-          <SubscriptionCard
-            subscription={item}
-            onPress={handleCardPress}
-            onDelete={handleDelete}
-          />
-        )}
-        ListEmptyComponent={
-          <View
-            style={[
-              styles.emptyContainer,
-              {
-                backgroundColor: theme.colors.surface,
-                borderColor: theme.colors.border,
-              },
-            ]}
-          >
-            <Text style={[styles.emptyTitle, { color: theme.colors.text }]}>
-              Abonelik Bulunamadı
-            </Text>
-            <Text
-              style={[
-                styles.emptySubtitle,
-                { color: theme.colors.textSecondary },
-              ]}
-            >
-              Filtrelerinizi değiştirin veya yeni bir abonelik ekleyin.
+        ListHeaderComponent={
+          <View style={styles.header}>
+            <View style={[styles.badge, dynamicStyles.badge]}>
+              <Text style={[styles.badgeText, dynamicStyles.badgeText]}>Öğrenci 2 Ekranı</Text>
+            </View>
+            <Text style={[styles.headerTitle, dynamicStyles.headerText]}>Aboneliklerim</Text>
+            <Text style={[styles.headerSubtitle, dynamicStyles.subHeader]}>
+              Detayları görmek için aboneliğe dokunun
             </Text>
           </View>
         }
@@ -178,39 +95,63 @@ export const SubscriptionsScreen: React.FC<SubscriptionsScreenProps> = ({
 };
 
 const styles = StyleSheet.create({
-  container: { flex: 1 },
-  header: {
-    paddingHorizontal: SPACING.md,
-    paddingTop: SPACING.md,
-    paddingBottom: SPACING.xs,
+  screen: {
+    flex: 1,
   },
-  title: { fontSize: FONT_SIZES.xxl, fontWeight: '800' },
-  subtitle: { fontSize: FONT_SIZES.sm, marginTop: 2, marginBottom: SPACING.sm },
-  searchInput: {
-    height: 44,
-    borderWidth: 1.5,
-    borderRadius: 10,
-    paddingHorizontal: SPACING.md,
-    fontSize: FONT_SIZES.md,
+  listContent: {
+    padding: SPACING.md,
+  },
+  header: {
+    marginBottom: SPACING.md,
+  },
+  badge: {
+    alignSelf: 'flex-start',
+    paddingHorizontal: SPACING.sm,
+    paddingVertical: SPACING.xs,
+    borderRadius: SPACING.xs,
+    marginBottom: SPACING.xs,
+  },
+  badgeText: {
+    fontSize: FONT_SIZES.xs,
+    fontWeight: '600',
+  },
+  headerTitle: {
+    fontSize: FONT_SIZES.xl,
+    fontWeight: '700',
+  },
+  headerSubtitle: {
+    fontSize: FONT_SIZES.sm,
+    marginTop: SPACING.xs,
+  },
+  itemCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    borderRadius: SPACING.md,
+    borderWidth: 1,
+    padding: SPACING.md,
     marginBottom: SPACING.sm,
   },
-  categoryList: { paddingVertical: SPACING.xs, gap: SPACING.xs },
-  filterChip: {
-    paddingHorizontal: SPACING.md,
-    paddingVertical: SPACING.xs + 2,
-    borderRadius: 16,
-    borderWidth: 1.5,
-    marginRight: SPACING.xs,
+  itemInfo: {
+    flex: 1,
   },
-  filterChipText: { fontSize: FONT_SIZES.xs, fontWeight: '600' },
-  listContent: { padding: SPACING.md, paddingBottom: SPACING.xl * 2 },
-  emptyContainer: {
-    padding: SPACING.xl,
-    borderRadius: 16,
-    borderWidth: 1,
-    alignItems: 'center',
-    marginTop: SPACING.lg,
+  itemName: {
+    fontSize: FONT_SIZES.md,
+    fontWeight: '600',
   },
-  emptyTitle: { fontSize: FONT_SIZES.lg, fontWeight: '700', marginBottom: SPACING.xs },
-  emptySubtitle: { fontSize: FONT_SIZES.sm, textAlign: 'center' },
+  itemCategory: {
+    fontSize: FONT_SIZES.xs,
+    marginTop: SPACING.xs,
+  },
+  itemPriceSection: {
+    alignItems: 'flex-end',
+  },
+  itemAmount: {
+    fontSize: FONT_SIZES.md,
+    fontWeight: '700',
+  },
+  itemCycle: {
+    fontSize: FONT_SIZES.xs,
+    marginTop: SPACING.xs,
+  },
 });

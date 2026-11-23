@@ -1,193 +1,124 @@
 import React from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  ScrollView,
-  TouchableOpacity,
-  Alert,
-} from 'react-native';
-import { Subscription } from '../types';
+import { StyleSheet, Text, View, ScrollView, TouchableOpacity, Alert } from 'react-native';
 import { useTheme } from '../context/ThemeContext';
 import { useSubscriptions } from '../context/SubscriptionContext';
 import { SPACING, FONT_SIZES } from '../constants/theme';
+import { RootStackScreenProps } from '../navigation/types';
 
-export interface SubscriptionDetailScreenProps {
-  subscription?: Subscription;
-  navigation?: {
-    goBack: () => void;
-    navigate: (screen: string) => void;
-  };
-  onBack?: () => void;
-}
-
-export const SubscriptionDetailScreen: React.FC<SubscriptionDetailScreenProps> = ({
-  subscription: propSubscription,
-  navigation,
-  onBack,
-}) => {
+export const SubscriptionDetailScreen: React.FC<
+  RootStackScreenProps<'SubscriptionDetail'>
+> = ({ route, navigation }) => {
+  const { subscriptionId } = route.params;
   const { theme } = useTheme();
-  const { selectedSubscription, deleteSubscription } = useSubscriptions();
+  const { subscriptions, deleteSubscription } = useSubscriptions();
 
-  const subscription = propSubscription || selectedSubscription;
+  const subscription = subscriptions.find((item) => item.id === subscriptionId);
 
-  const handleBack = () => {
-    if (navigation?.goBack) {
-      navigation.goBack();
-    } else if (onBack) {
-      onBack();
-    }
+  const handleDelete = (): void => {
+    Alert.alert('Aboneliği Sil', 'Bu aboneliği silmek istediğinize emin misiniz?', [
+      { text: 'İptal', style: 'cancel' },
+      {
+        text: 'Sil',
+        style: 'destructive',
+        onPress: () => {
+          deleteSubscription(subscriptionId);
+          navigation.goBack();
+        },
+      },
+    ]);
   };
 
-  const handleDelete = () => {
-    if (!subscription) return;
-    Alert.alert(
-      'Aboneliği Sil',
-      `"${subscription.name}" aboneliğini silmek istediğinize emin misiniz?`,
-      [
-        { text: 'İptal', style: 'cancel' },
-        {
-          text: 'Sil',
-          style: 'destructive',
-          onPress: () => {
-            deleteSubscription(subscription.id);
-            handleBack();
-          },
-        },
-      ]
-    );
+  const dynamicStyles = {
+    screen: {
+      backgroundColor: theme.background,
+    },
+    card: {
+      backgroundColor: theme.surface,
+      borderColor: theme.border,
+    },
+    badge: {
+      backgroundColor: theme.primary,
+    },
+    badgeText: {
+      color: theme.buttonText,
+    },
+    title: {
+      color: theme.text,
+    },
+    subtitle: {
+      color: theme.textSecondary,
+    },
+    rowBorder: {
+      borderBottomColor: theme.border,
+    },
+    label: {
+      color: theme.textSecondary,
+    },
+    value: {
+      color: theme.text,
+    },
+    deleteButton: {
+      borderColor: theme.error,
+    },
+    deleteButtonText: {
+      color: theme.error,
+    },
   };
 
   if (!subscription) {
     return (
-      <View style={[styles.centerContainer, { backgroundColor: theme.colors.background }]}>
-        <Text style={[styles.notFoundText, { color: theme.colors.textSecondary }]}>
-          Abonelik seçilmedi veya bulunamadı.
-        </Text>
-        <TouchableOpacity
-          onPress={handleBack}
-          style={[styles.backButton, { backgroundColor: theme.colors.primary }]}
-        >
-          <Text style={styles.backButtonText}>Geri Dön</Text>
-        </TouchableOpacity>
+      <View style={[styles.screen, styles.center, dynamicStyles.screen]}>
+        <Text style={[styles.title, dynamicStyles.title]}>Abonelik bulunamadı.</Text>
       </View>
     );
   }
 
-  const isMonthly = subscription.billingCycle === 'monthly';
-  const yearlyEstimate = isMonthly ? subscription.amount * 12 : subscription.amount;
-  const monthlyEstimate = isMonthly ? subscription.amount : subscription.amount / 12;
-
-  // Calculate days until next payment
-  const today = new Date();
-  const currentDay = today.getDate();
-  const daysUntilPayment =
-    subscription.paymentDay >= currentDay
-      ? subscription.paymentDay - currentDay
-      : 30 - currentDay + subscription.paymentDay;
-
   return (
-    <ScrollView
-      style={[styles.container, { backgroundColor: theme.colors.background }]}
-      contentContainerStyle={styles.content}
-      showsVerticalScrollIndicator={false}
-    >
-      {/* Top Bar */}
-      <View style={styles.topBar}>
-        <TouchableOpacity onPress={handleBack} style={styles.navButton}>
-          <Text style={[styles.navButtonText, { color: theme.colors.primary }]}>
-            ← Geri
-          </Text>
-        </TouchableOpacity>
-        <Text style={[styles.navTitle, { color: theme.colors.text }]}>
-          Abonelik Detayı
-        </Text>
-        <View style={styles.navSpacer} />
-      </View>
+    <ScrollView style={[styles.screen, dynamicStyles.screen]} contentContainerStyle={styles.content}>
+      <View style={[styles.card, dynamicStyles.card]}>
+        <View style={styles.badgeRow}>
+          <View style={[styles.badge, dynamicStyles.badge]}>
+            <Text style={[styles.badgeText, dynamicStyles.badgeText]}>Öğrenci 2 Ekranı</Text>
+          </View>
+        </View>
 
-      {/* Hero Card */}
-      <View
-        style={[
-          styles.heroCard,
-          { backgroundColor: theme.colors.surface, borderColor: theme.colors.border },
-        ]}
-      >
-        <View style={styles.badge}>
-          <Text style={[styles.badgeText, { color: theme.colors.primary }]}>
-            {subscription.category}
+        <Text style={[styles.title, dynamicStyles.title]}>{subscription.name}</Text>
+        <Text style={[styles.subtitle, dynamicStyles.subtitle]}>
+          Abonelik Detay ve Yönetim Kartı
+        </Text>
+
+        <View style={[styles.detailRow, dynamicStyles.rowBorder]}>
+          <Text style={[styles.label, dynamicStyles.label]}>Tutar</Text>
+          <Text style={[styles.value, dynamicStyles.value]}>
+            {subscription.amount.toFixed(2)} {subscription.currency}
           </Text>
         </View>
 
-        <Text style={[styles.name, { color: theme.colors.text }]}>
-          {subscription.name}
-        </Text>
-
-        <Text style={[styles.price, { color: theme.colors.primary }]}>
-          {subscription.amount.toFixed(2)} {subscription.currency}
-        </Text>
-        <Text style={[styles.cycle, { color: theme.colors.textSecondary }]}>
-          {isMonthly ? 'Aylık Fatura' : 'Yıllık Fatura'}
-        </Text>
-      </View>
-
-      {/* Details List */}
-      <View
-        style={[
-          styles.detailsCard,
-          { backgroundColor: theme.colors.surface, borderColor: theme.colors.border },
-        ]}
-      >
-        <View style={styles.detailRow}>
-          <Text style={[styles.detailLabel, { color: theme.colors.textSecondary }]}>
-            Ödeme Günü
-          </Text>
-          <Text style={[styles.detailValue, { color: theme.colors.text }]}>
-            Her ayın {subscription.paymentDay}. günü
+        <View style={[styles.detailRow, dynamicStyles.rowBorder]}>
+          <Text style={[styles.label, dynamicStyles.label]}>Ödeme Periyodu</Text>
+          <Text style={[styles.value, dynamicStyles.value]}>
+            {subscription.billingCycle === 'monthly' ? 'Aylık' : 'Yıllık'}
           </Text>
         </View>
 
-        <View style={[styles.divider, { backgroundColor: theme.colors.border }]} />
-
-        <View style={styles.detailRow}>
-          <Text style={[styles.detailLabel, { color: theme.colors.textSecondary }]}>
-            Sonraki Ödemeye Kalan
-          </Text>
-          <Text style={[styles.detailValue, { color: theme.colors.primary }]}>
-            {daysUntilPayment === 0 ? 'Bugün!' : `${daysUntilPayment} gün`}
-          </Text>
+        <View style={[styles.detailRow, dynamicStyles.rowBorder]}>
+          <Text style={[styles.label, dynamicStyles.label]}>Ödeme Günü</Text>
+          <Text style={[styles.value, dynamicStyles.value]}>Her ayın {subscription.paymentDay}. günü</Text>
         </View>
 
-        <View style={[styles.divider, { backgroundColor: theme.colors.border }]} />
-
         <View style={styles.detailRow}>
-          <Text style={[styles.detailLabel, { color: theme.colors.textSecondary }]}>
-            Aylık Maliyet
-          </Text>
-          <Text style={[styles.detailValue, { color: theme.colors.text }]}>
-            ~{monthlyEstimate.toFixed(2)} {subscription.currency}
-          </Text>
-        </View>
-
-        <View style={[styles.divider, { backgroundColor: theme.colors.border }]} />
-
-        <View style={styles.detailRow}>
-          <Text style={[styles.detailLabel, { color: theme.colors.textSecondary }]}>
-            Yıllık Toplam Maliyet
-          </Text>
-          <Text style={[styles.detailValue, { color: theme.colors.text }]}>
-            {yearlyEstimate.toFixed(2)} {subscription.currency}
-          </Text>
+          <Text style={[styles.label, dynamicStyles.label]}>Kategori</Text>
+          <Text style={[styles.value, dynamicStyles.value]}>{subscription.category}</Text>
         </View>
       </View>
 
-      {/* Delete Action */}
       <TouchableOpacity
-        activeOpacity={0.8}
+        style={[styles.deleteButton, dynamicStyles.deleteButton]}
         onPress={handleDelete}
-        style={[styles.deleteButton, { borderColor: theme.colors.error }]}
+        activeOpacity={0.8}
       >
-        <Text style={[styles.deleteButtonText, { color: theme.colors.error }]}>
-          Aboneliği Sil
+        <Text style={[styles.deleteButtonText, dynamicStyles.deleteButtonText]}>
+          Aboneliği Sil (Test)
         </Text>
       </TouchableOpacity>
     </ScrollView>
@@ -195,70 +126,66 @@ export const SubscriptionDetailScreen: React.FC<SubscriptionDetailScreenProps> =
 };
 
 const styles = StyleSheet.create({
-  container: { flex: 1 },
-  content: { padding: SPACING.md, paddingBottom: SPACING.xl * 2 },
-  topBar: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: SPACING.md,
+  screen: {
+    flex: 1,
   },
-  navButton: { paddingVertical: SPACING.xs, paddingHorizontal: SPACING.xs },
-  navButtonText: { fontSize: FONT_SIZES.md, fontWeight: '700' },
-  navTitle: { fontSize: FONT_SIZES.lg, fontWeight: '700' },
-  navSpacer: { width: 40 },
-  heroCard: {
-    borderRadius: 16,
+  center: {
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: SPACING.md,
+  },
+  content: {
+    padding: SPACING.md,
+  },
+  card: {
+    borderRadius: SPACING.md,
     borderWidth: 1,
-    padding: SPACING.xl,
-    alignItems: 'center',
-    marginBottom: SPACING.md,
+    padding: SPACING.lg,
+    marginBottom: SPACING.lg,
   },
-  badge: {
-    paddingHorizontal: SPACING.md,
-    paddingVertical: SPACING.xs,
-    borderRadius: 12,
-    backgroundColor: 'rgba(67, 97, 238, 0.1)',
+  badgeRow: {
+    flexDirection: 'row',
     marginBottom: SPACING.sm,
   },
-  badgeText: { fontSize: FONT_SIZES.xs, fontWeight: '700' },
-  name: { fontSize: FONT_SIZES.xxl, fontWeight: '800', marginBottom: SPACING.xs },
-  price: { fontSize: 32, fontWeight: '900' },
-  cycle: { fontSize: FONT_SIZES.sm, marginTop: 4 },
-  detailsCard: {
-    borderRadius: 16,
-    borderWidth: 1,
-    padding: SPACING.md,
-    marginBottom: SPACING.lg,
+  badge: {
+    paddingHorizontal: SPACING.sm,
+    paddingVertical: SPACING.xs,
+    borderRadius: SPACING.xs,
+  },
+  badgeText: {
+    fontSize: FONT_SIZES.xs,
+    fontWeight: '600',
+  },
+  title: {
+    fontSize: FONT_SIZES.xl,
+    fontWeight: '700',
+    marginBottom: SPACING.xs,
+  },
+  subtitle: {
+    fontSize: FONT_SIZES.sm,
+    marginBottom: SPACING.md,
   },
   detailRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingVertical: SPACING.sm,
+    paddingVertical: SPACING.md,
+    borderBottomWidth: 1,
   },
-  detailLabel: { fontSize: FONT_SIZES.sm, fontWeight: '500' },
-  detailValue: { fontSize: FONT_SIZES.sm, fontWeight: '700' },
-  divider: { height: 1, width: '100%' },
+  label: {
+    fontSize: FONT_SIZES.sm,
+  },
+  value: {
+    fontSize: FONT_SIZES.sm,
+    fontWeight: '600',
+  },
   deleteButton: {
-    height: 48,
-    borderRadius: 12,
-    borderWidth: 1.5,
+    borderWidth: 1,
+    borderRadius: SPACING.sm,
+    paddingVertical: SPACING.md,
     alignItems: 'center',
-    justifyContent: 'center',
   },
-  deleteButtonText: { fontSize: FONT_SIZES.md, fontWeight: '700' },
-  centerContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: SPACING.xl,
+  deleteButtonText: {
+    fontSize: FONT_SIZES.md,
+    fontWeight: '600',
   },
-  notFoundText: { fontSize: FONT_SIZES.md, marginBottom: SPACING.md },
-  backButton: {
-    paddingHorizontal: SPACING.lg,
-    paddingVertical: SPACING.sm,
-    borderRadius: 10,
-  },
-  backButtonText: { color: '#FFFFFF', fontWeight: '700', fontSize: FONT_SIZES.sm },
 });

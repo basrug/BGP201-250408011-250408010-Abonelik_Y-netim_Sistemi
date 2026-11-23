@@ -2,7 +2,7 @@ export type Currency = 'TRY' | 'USD' | 'EUR';
 
 export type BillingCycle = 'monthly' | 'yearly';
 
-export type SubscriptionCategory =
+  export type SubscriptionCategory =
   | 'Eğlence'
   | 'Yazılım'
   | 'Fatura'
