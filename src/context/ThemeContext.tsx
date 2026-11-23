@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useState, ReactNode } from 'react';
 import { LIGHT_COLORS, DARK_COLORS, ThemeColors } from '../constants/theme';
 
-export interface Theme {
+export interface Theme extends ThemeColors {
   colors: ThemeColors;
   isDark: boolean;
 }
@@ -25,8 +25,11 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
     setIsDark((prev) => !prev);
   };
 
+  const colors = isDark ? DARK_COLORS : LIGHT_COLORS;
+
   const currentTheme: Theme = {
-    colors: isDark ? DARK_COLORS : LIGHT_COLORS,
+    ...colors,
+    colors,
     isDark,
   };
 
