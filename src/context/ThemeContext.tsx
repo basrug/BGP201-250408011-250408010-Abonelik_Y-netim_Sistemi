@@ -1,9 +1,14 @@
 import React, { createContext, useContext, useState, ReactNode } from 'react';
-import { ThemeColors, LIGHT_THEME, DARK_THEME } from '../constants/theme';
+import { LIGHT_COLORS, DARK_COLORS, ThemeColors } from '../constants/theme';
+
+export interface Theme {
+  colors: ThemeColors;
+  isDark: boolean;
+}
 
 interface ThemeContextType {
+  theme: Theme;
   isDark: boolean;
-  theme: ThemeColors;
   toggleTheme: () => void;
 }
 
@@ -16,14 +21,17 @@ interface ThemeProviderProps {
 export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
   const [isDark, setIsDark] = useState<boolean>(false);
 
-  const toggleTheme = (): void => {
-    setIsDark((previousState) => !previousState);
+  const toggleTheme = () => {
+    setIsDark((prev) => !prev);
   };
 
-  const currentTheme = isDark ? DARK_THEME : LIGHT_THEME;
+  const currentTheme: Theme = {
+    colors: isDark ? DARK_COLORS : LIGHT_COLORS,
+    isDark,
+  };
 
   return (
-    <ThemeContext.Provider value={{ isDark, theme: currentTheme, toggleTheme }}>
+    <ThemeContext.Provider value={{ theme: currentTheme, isDark, toggleTheme }}>
       {children}
     </ThemeContext.Provider>
   );

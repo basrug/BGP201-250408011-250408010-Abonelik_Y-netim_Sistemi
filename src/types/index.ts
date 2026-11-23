@@ -2,7 +2,12 @@ export type Currency = 'TRY' | 'USD' | 'EUR';
 
 export type BillingCycle = 'monthly' | 'yearly';
 
-export type SubscriptionCategory = 'Eğlence' | 'Yazılım' | 'Fatura' | 'Eğitim' | 'Diğer';
+  export type SubscriptionCategory =
+  | 'Eğlence'
+  | 'Yazılım'
+  | 'Fatura'
+  | 'Eğitim'
+  | 'Diğer';
 
 export interface Subscription {
   id: string;
@@ -14,9 +19,11 @@ export interface Subscription {
   category: SubscriptionCategory;
 }
 
-export interface UserProfile {
-  id: string;
-  fullName: string;
-  email: string;
-  createdAt: string;
+export interface SubscriptionFormData {
+  name: string;
+  amount: string;
+  currency: Currency;
+  billingCycle: BillingCycle;
+  paymentDay: string;
+  category: SubscriptionCategory;
 }

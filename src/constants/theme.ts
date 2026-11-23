@@ -5,6 +5,7 @@ export interface ThemeColors {
   textSecondary: string;
   primary: string;
   error: string;
+
   success: string;
   border: string;
   card: string;
@@ -12,12 +13,14 @@ export interface ThemeColors {
 }
 
 export const LIGHT_THEME: ThemeColors = {
+
   background: '#F8F9FA',
   surface: '#FFFFFF',
   text: '#1A1D20',
   textSecondary: '#6C757D',
   primary: '#4361EE',
   error: '#E63946',
+
   success: '#2A9D8F',
   border: '#E9ECEF',
   card: '#FFFFFF',
@@ -35,6 +38,7 @@ export const DARK_THEME: ThemeColors = {
   border: '#2C2C2C',
   card: '#1E1E1E',
   buttonText: '#FFFFFF',
+
 };
 
 export const SPACING = {
@@ -43,13 +47,16 @@ export const SPACING = {
   md: 16,
   lg: 24,
   xl: 32,
+
   xxl: 40,
+
 } as const;
 
 export const FONT_SIZES = {
   xs: 12,
   sm: 14,
   md: 16,
+
   lg: 20,
   xl: 24,
   xxl: 30,

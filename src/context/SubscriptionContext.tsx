@@ -3,6 +3,7 @@ import { Subscription } from '../types';
 
 interface SubscriptionContextType {
   subscriptions: Subscription[];
+
   addSubscription: (sub: Omit<Subscription, 'id'>) => void;
   deleteSubscription: (id: string) => void;
 }
@@ -10,6 +11,7 @@ interface SubscriptionContextType {
 const INITIAL_SUBSCRIPTIONS: Subscription[] = [
   {
     id: '1',
+
     name: 'Netflix',
     amount: 149.99,
     currency: 'TRY',
@@ -18,11 +20,14 @@ const INITIAL_SUBSCRIPTIONS: Subscription[] = [
     category: 'Eğlence',
   },
   {
+
     id: '2',
+
     name: 'Spotify',
     amount: 59.99,
     currency: 'TRY',
     billingCycle: 'monthly',
+
     paymentDay: 22,
     category: 'Eğlence',
   },
@@ -48,12 +53,14 @@ const INITIAL_SUBSCRIPTIONS: Subscription[] = [
 
 const SubscriptionContext = createContext<SubscriptionContextType | undefined>(undefined);
 
+
 interface SubscriptionProviderProps {
   children: ReactNode;
 }
 
 export const SubscriptionProvider: React.FC<SubscriptionProviderProps> = ({ children }) => {
   const [subscriptions, setSubscriptions] = useState<Subscription[]>(INITIAL_SUBSCRIPTIONS);
+
 
   const addSubscription = (sub: Omit<Subscription, 'id'>): void => {
     const newSubscription: Subscription = {
@@ -71,6 +78,7 @@ export const SubscriptionProvider: React.FC<SubscriptionProviderProps> = ({ chil
 
   return (
     <SubscriptionContext.Provider value={{ subscriptions, addSubscription, deleteSubscription }}>
+
       {children}
     </SubscriptionContext.Provider>
   );

@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
@@ -26,11 +27,13 @@ const AppContent: React.FC = () => {
       <StatusBar style={isDark ? 'light' : 'dark'} />
       <AppNavigator />
     </NavigationContainer>
+
   );
 };
 
 export default function App() {
   return (
+
     <SafeAreaProvider>
       <ThemeProvider>
         <SubscriptionProvider>
